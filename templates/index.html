@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <title>TODO App</title>
+</head>
+<body>
+    <h1>TODO List</h1>
+    <form id="task-form">
+        <input type="text" id="task-title" placeholder="Enter task title" required>
+        <button type="submit">Add Task</button>
+    </form>
+    <ul id="task-list"></ul>
+
+    <script>
+        document.getElementById('task-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const title = document.getElementById('task-title').value;
+            await fetch('/tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ title }),
+            });
+            document.getElementById('task-title').value = '';
+            loadTasks();
+        });
+
+        async function loadTasks() {
+            const response = await fetch('/tasks');
+            const tasks = await response.json();
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = '';
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.textContent = task.title;
+                li.style.textDecoration = task.completed ? 'line-through' : 'none';
+                li.addEventListener('click', async () => {
+                    await fetch(`/tasks?id=${task.id}`, { method: 'PUT', body: new URLSearchParams({ completed: !task.completed }) });
+                    loadTasks();
+                });
+                taskList.appendChild(li);
+            });
+        }
+
+        loadTasks();
+    </script>
+</body>
+</html>
